@@ -21,9 +21,8 @@ def dot(vec1, vec2):
 
 
 def angle(vec1, vec2):
-    angle = math.degrees(math.acos(round(dot(vec1, vec2) /
-                                         (vectorlength(vec1) * vectorlength(vec2)), 10)))
-    return angle
+    ang = math.degrees(math.acos(round(dot(vec1, vec2) / (vectorlength(vec1) * vectorlength(vec2)), 10)))
+    return ang
 
 
 def cellmatrix(unitvec):
@@ -33,10 +32,6 @@ def cellmatrix(unitvec):
 
     ang = [alpha, beta, gamma]
     angles = np.array(ang)
-
-    a = vectorlength(unitvec[0])
-    b = vectorlength(unitvec[1])
-    c = vectorlength(unitvec[2])
 
     mat = unitvec
     matrix = np.array(mat)
