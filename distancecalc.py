@@ -231,24 +231,20 @@ def calculateangle(args):
 
 
 def main():
-    description = ""
-    descdist = ""
-    descangle = ""
-
     # Main parser
-    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 
     # Subparsers
     subparsers = parser.add_subparsers(title="Functions")
 
-    parser_dist = subparsers.add_parser("dist", formatter_class=argparse.RawTextHelpFormatter, description=descdist)
+    parser_dist = subparsers.add_parser("dist", formatter_class=argparse.RawTextHelpFormatter)
     parser_dist.add_argument("-i", dest="input", type=str, default="POSCAR")
     parser_dist.add_argument("-o", dest="output", type=str, default=None)
     parser_dist.add_argument("-s", dest="species", type=str, required=True, nargs="*")
     parser_dist.add_argument("-t", dest="tol", type=float, default=0.01)
     parser_dist.set_defaults(func=calculatedistance)
 
-    parser_angle = subparsers.add_parser("angle", formatter_class=argparse.RawTextHelpFormatter, description=descangle)
+    parser_angle = subparsers.add_parser("angle", formatter_class=argparse.RawTextHelpFormatter)
     parser_angle.add_argument("-i", dest="input", type=str, default="POSCAR")
     parser_angle.add_argument("-o", dest="output", type=str, default=None)
     parser_angle.add_argument("-s", dest="species", type=str, required=True, nargs="*")
