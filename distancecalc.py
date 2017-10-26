@@ -12,11 +12,10 @@ def vectorlength(vec):
     return len_vec
 
 
-def vectordistance(vec1, vec2):
-    dist_vec = math.sqrt(math.pow(float(vec1[0]) - float(vec2[0]), 2.0) +
-                         math.pow(float(vec1[1]) - float(vec2[1]), 2.0) +
-                         math.pow(float(vec1[2]) - float(vec2[2]), 2.0))
-    return dist_vec
+def pointdistance(vec1, vec2):
+    dist = math.sqrt(math.pow(float(vec1[0]) - float(vec2[0]), 2.0) + math.pow(float(vec1[1]) - float(vec2[1]), 2.0)
+                     + math.pow(float(vec1[2]) - float(vec2[2]), 2.0))
+    return dist
 
 
 def dot(vec1, vec2):
@@ -135,7 +134,7 @@ def distancecalc(cellinfo, species, tolerance):
         pos = cellinfo['coord']
 
     if len(species) == 1:
-        for x in itertools.combinations_with_replacement(species, 2):
+        for x in itertools.product(species, repeat=2):
             comb.append(x)
 
     else:
@@ -149,15 +148,15 @@ def distancecalc(cellinfo, species, tolerance):
                     ind.append([y[0][0], y[1][0]])
 
     for x in ind:
-        if vectordistance(pos[x[0]], pos[x[1]]) >= tolerance:
-            dist.append(vectordistance(pos[x[0]], pos[x[1]]))
+        if pointdistance(pos[x[0]], pos[x[1]]) >= tolerance:
+            dist.append(pointdistance(pos[x[0]], pos[x[1]]))
         else:
             pass
 
     return np.array(sorted(dist, key=float))
 
 
-def anglecalc(cellinfo, species, tolerance):
+def anglecalc(cellinfo, species, tolerance, disttolerance):
     print("Calculating angles...")
     ang = []
     comb = []
@@ -169,25 +168,35 @@ def anglecalc(cellinfo, species, tolerance):
         pos = cellinfo['coord']
 
     if len(species) == 1:
-        for x in itertools.combinations_with_replacement(species, 3):
+        for x in itertools.product(species, repeat=3):
             comb.append(x)
 
-    else:
+    elif len(species) == 3:
         for x in itertools.combinations(species, 3):
             comb.append(x)
 
+    else:
+        raise ValueError("Input species are wrong!")
+
     for x in comb:
-        for y in itertools.combinations(enumerate(cellinfo['atomlist']), 3):
-            for z in itertools.combinations([y[0][1][0], y[1][1][0], y[2][1][0]], 3):
-                if x == z:
-                    ind.append([y[0][0], y[1][0], y[2][0]])
+        for y in itertools.permutations(enumerate(cellinfo['atomlist']), 3):
+            compare = (y[0][1][0], y[1][1][0], y[2][1][0])
+            print(compare)
+            if compare == x:
+                ind.append([y[0][0], y[1][0], y[2][0]])
 
     for x in ind:
-        vec1 = pos[x[0]] - pos[x[2]]
-        vec2 = pos[x[1]] - pos[x[2]]
-        if angle(vec1, vec2) >= tolerance:
-            ang.append(angle(vec1, vec2))
+        vec1 = pos[x[0]] - pos[x[1]]
+        vec2 = pos[x[2]] - pos[x[1]]
+        d1 = pointdistance(pos[x[0]], pos[x[1]])
+        d2 = pointdistance(pos[x[2]], pos[x[1]])
 
+        if d1 >= disttolerance and d2 >= disttolerance:
+            if angle(vec1, vec2) >= tolerance:
+                ang.append(angle(vec1, vec2))
+
+            else:
+                pass
         else:
             pass
 
@@ -201,7 +210,7 @@ def outwrite(data, outfile):
     else:
         with open(outfile, "w") as out:
             for x in data:
-                out.write(x)
+                out.write(str(x))
                 out.write("\n")
 
     return
@@ -216,7 +225,7 @@ def calculatedistance(args):
 
 def calculateangle(args):
     p = strucparser(args.input)
-    a = anglecalc(p, args.species, args.tol)
+    a = anglecalc(p, args.species, args.tol, args.disttol)
     outwrite(a, args.output)
     return
 
@@ -244,6 +253,7 @@ def main():
     parser_angle.add_argument("-o", dest="output", type=str, default=None)
     parser_angle.add_argument("-s", dest="species", type=str, required=True, nargs="*")
     parser_angle.add_argument("-t", dest="tol", type=float, default=0.1)
+    parser_angle.add_argument("-d", dest="disttol", type=float, default=5)
     parser_angle.set_defaults(func=calculateangle)
 
     args = parser.parse_args()
