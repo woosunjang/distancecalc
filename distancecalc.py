@@ -33,20 +33,7 @@ def angle(vec1, vec2):
     return ang
 
 
-def cellmatrix(unitvec):
-    alpha = angle(unitvec[1], unitvec[2])
-    beta = angle(unitvec[2], unitvec[0])
-    gamma = angle(unitvec[0], unitvec[1])
-
-    ang = [alpha, beta, gamma]
-    angles = np.array(ang)
-
-    mat = unitvec
-    matrix = np.array(mat)
-    return matrix, angles
-
-
-def parser(infile):
+def strucparser(infile):
     print("Reading " + str(infile) + "...")
 
     with open(infile, 'r') as f:
@@ -136,7 +123,8 @@ def parser(infile):
     return dic
 
 
-def distancecalc(cellinfo, output, species, tolerance):
+def distancecalc(cellinfo, species, tolerance):
+    print("Calculating distances...")
     dist = []
     comb = []
     ind = []
@@ -161,12 +149,16 @@ def distancecalc(cellinfo, output, species, tolerance):
                     ind.append([y[0][0], y[1][0]])
 
     for x in ind:
-        dist.append(vectordistance(pos[x[0]], pos[x[1]]))
+        if vectordistance(pos[x[0]], pos[x[1]]) >= tolerance:
+            dist.append(vectordistance(pos[x[0]], pos[x[1]]))
+        else:
+            pass
 
     return np.array(sorted(dist, key=float))
 
 
-def anglecalc(cellinfo, output, species, tolerance):
+def anglecalc(cellinfo, species, tolerance):
+    print("Calculating angles...")
     ang = []
     comb = []
     ind = []
@@ -193,20 +185,39 @@ def anglecalc(cellinfo, output, species, tolerance):
     for x in ind:
         vec1 = pos[x[0]] - pos[x[2]]
         vec2 = pos[x[1]] - pos[x[2]]
-        ang.append(angle(vec1, vec2))
+        if angle(vec1, vec2) >= tolerance:
+            ang.append(angle(vec1, vec2))
+
+        else:
+            pass
 
     return np.array(sorted(ang, key=float))
 
 
+def outwrite(data, outfile):
+    if outfile is None:
+        print(data)
+
+    else:
+        with open(outfile, "w") as out:
+            for x in data:
+                out.write(x)
+                out.write("\n")
+
+    return
+
+
 def calculatedistance(args):
-    p = parser(args.input)
-    d = distancecalc(p, args.output, args.species, args.tol)
+    p = strucparser(args.input)
+    d = distancecalc(p, args.species, args.tol)
+    outwrite(d, args.output)
     return
 
 
 def calculateangle(args):
-    p = parser(args.input)
-    d = anglecalc(p, args.output, args.species, args.tol)
+    p = strucparser(args.input)
+    a = anglecalc(p, args.species, args.tol)
+    outwrite(a, args.output)
     return
 
 
@@ -243,6 +254,7 @@ def main():
         parser.print_help()
         raise AttributeError("Error!")
     args.func(args)
+
 
 if __name__ == "__main__":
     main()
