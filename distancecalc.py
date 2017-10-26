@@ -1,9 +1,10 @@
 #!/usr/local/bin/python
 
 import argparse
-from collections import OrderedDict
 import numpy as np
 import math
+import itertools
+from collections import OrderedDict
 
 
 def vectorlength(vec):
@@ -113,10 +114,35 @@ def parser(infile):
                 atomlist.append(i)
         atomlist = np.vstack(atomlist)
 
-    return fileindex, unitvec, atominfo, cart, seldyn, coord, dyn, vel, atomlist
+        dic = {"index": fileindex,
+               "unitvec": unitvec,
+               "atominfo": atominfo,
+               "cart": cart,
+               "seldyn": seldyn,
+               "coord": coord,
+               "dyn": dyn,
+               "vel": vel,
+               "atomlist": atomlist
+               }
+
+    return dic
 
 
 def distancecalc(cellinfo, output, species, tolerance):
+    if cellinfo['cart'] is False:
+        pos = cellinfo['coord']
+    else:
+        pos = cellinfo['coord']
+
+    comb = []
+    if len(species) == 1:
+        for x in itertools.combinations_with_replacement(species, 2):
+            comb.append(x)
+
+    else:
+        for x in itertools.combinations(species, 2):
+            comb.append(x)
+
 
     return
 
@@ -127,35 +153,49 @@ def anglecalc(cellinfo, output, species, tolerance):
 
 def calculatedistance(args):
     p = parser(args.input)
-    d = distancecalc(p, args.output, args.species, args.tolerance)
+    d = distancecalc(p, args.output, args.species, args.tol)
     return
 
 
 def calculateangle(args):
     p = parser(args.input)
-    d = anglecalc(p, args.output, args.species, args.tolerance)
+    d = anglecalc(p, args.output, args.species, args.tol)
     return
 
 
 def main():
+    description = ""
+    descdist = ""
+    descangle = ""
+
     # Main parser
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
     # Subparsers
     subparsers = parser.add_subparsers(title="Functions")
 
-    parser_dist = subparsers.add_parser("dist", formatter_class=argparse.RawTextHelpFormatter, description=descpoly)
+    parser_dist = subparsers.add_parser("dist", formatter_class=argparse.RawTextHelpFormatter, description=descdist)
     parser_dist.add_argument("-i", dest="input", type=str, default="POSCAR")
     parser_dist.add_argument("-o", dest="output", type=str, default=None)
     parser_dist.add_argument("-s", dest="species", type=str, required=True, nargs="*")
     parser_dist.add_argument("-t", dest="tol", type=float, default=0.01)
     parser_dist.set_defaults(func=calculatedistance)
 
-    parser_angle = subparsers.add_parser("angle", formatter_class=argparse.RawTextHelpFormatter, description=descpoly)
+    parser_angle = subparsers.add_parser("angle", formatter_class=argparse.RawTextHelpFormatter, description=descangle)
     parser_angle.add_argument("-i", dest="input", type=str, default="POSCAR")
     parser_angle.add_argument("-o", dest="output", type=str, default=None)
     parser_angle.add_argument("-s", dest="species", type=str, required=True, nargs="*")
     parser_angle.add_argument("-t", dest="tol", type=float, default=0.1)
     parser_angle.set_defaults(func=calculateangle)
 
+    args = parser.parse_args()
 
+    try:
+        getattr(args, "func")
+    except AttributeError:
+        parser.print_help()
+        raise AttributeError("Error!")
+    args.func(args)
+
+if __name__ == "__main__":
+    main()
