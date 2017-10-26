@@ -12,6 +12,13 @@ def vectorlength(vec):
     return len_vec
 
 
+def vectordistance(vec1, vec2):
+    dist_vec = math.sqrt(math.pow(float(vec1[0]) - float(vec2[0]), 2.0) +
+                         math.pow(float(vec1[1]) - float(vec2[1]), 2.0) +
+                         math.pow(float(vec1[2]) - float(vec2[2]), 2.0))
+    return dist_vec
+
+
 def dot(vec1, vec2):
     dot_prod = 0.0
 
@@ -69,6 +76,7 @@ def parser(infile):
             seldyn = False
             coordtype = determ_line.strip(' \n')
 
+        cart = None
         if coordtype[0] == 'D':
             cart = False
         elif coordtype[0] == 'd':
@@ -129,12 +137,15 @@ def parser(infile):
 
 
 def distancecalc(cellinfo, output, species, tolerance):
+    dist = []
+    comb = []
+    ind = []
+
     if cellinfo['cart'] is False:
-        pos = cellinfo['coord']
+        pos = np.dot(cellinfo['coord'], cellinfo['unitvec'])
     else:
         pos = cellinfo['coord']
 
-    comb = []
     if len(species) == 1:
         for x in itertools.combinations_with_replacement(species, 2):
             comb.append(x)
@@ -143,12 +154,48 @@ def distancecalc(cellinfo, output, species, tolerance):
         for x in itertools.combinations(species, 2):
             comb.append(x)
 
+    for x in comb:
+        for y in itertools.combinations(enumerate(cellinfo['atomlist']), 2):
+            for z in itertools.combinations([y[0][1][0], y[1][1][0]], 2):
+                if x == z:
+                    ind.append([y[0][0], y[1][0]])
 
-    return
+    for x in ind:
+        dist.append(vectordistance(pos[x[0]], pos[x[1]]))
+
+    return np.array(sorted(dist, key=float))
 
 
 def anglecalc(cellinfo, output, species, tolerance):
-    return
+    ang = []
+    comb = []
+    ind = []
+
+    if cellinfo['cart'] is False:
+        pos = np.dot(cellinfo['coord'], cellinfo['unitvec'])
+    else:
+        pos = cellinfo['coord']
+
+    if len(species) == 1:
+        for x in itertools.combinations_with_replacement(species, 3):
+            comb.append(x)
+
+    else:
+        for x in itertools.combinations(species, 3):
+            comb.append(x)
+
+    for x in comb:
+        for y in itertools.combinations(enumerate(cellinfo['atomlist']), 3):
+            for z in itertools.combinations([y[0][1][0], y[1][1][0], y[2][1][0]], 3):
+                if x == z:
+                    ind.append([y[0][0], y[1][0], y[2][0]])
+
+    for x in ind:
+        vec1 = pos[x[0]] - pos[x[2]]
+        vec2 = pos[x[1]] - pos[x[2]]
+        ang.append(angle(vec1, vec2))
+
+    return np.array(sorted(ang, key=float))
 
 
 def calculatedistance(args):
